@@ -1,0 +1,31 @@
+name: Build and Push Docker Image to GHCR
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Tag for the Docker image (e.g., 1.0.0, latest)'
+        required: true
+        default: 'latest'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Log in to GitHub Container Registry
+      run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+    - name: Build and Push Docker Image
+      env:
+        IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/php
+        TAG: ${{ github.event.inputs.image_tag }}
+      run: |
+        echo "Building Docker image..."
+        docker build -t "${IMAGE_NAME}:${TAG}" .
+        
+        echo "Pushing Docker image..."
+        docker push "${IMAGE_NAME}:${TAG}"

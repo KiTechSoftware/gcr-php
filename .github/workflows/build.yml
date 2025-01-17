@@ -1,0 +1,101 @@
+name: Build and Push Multi-Arch Docker Images
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        dockerfile:
+          - 8.3/cli/alpine
+          - 8.3/fpm/alpine
+          - 8.3/cli/debian
+          - 8.3/fpm/debian
+          - 8.4/cli/alpine
+          - 8.4/fpm/alpine
+          - 8.4/cli/debian
+          - 8.4/fpm/debian
+          - 8.5/cli/alpine
+          - 8.5/fpm/alpine
+          - 8.5/cli/debian
+          - 8.5/fpm/debian
+        os:
+          - alpine
+          - debian
+        include:
+          - dockerfile: 8.3/cli/alpine
+            tag: "8.3-cli-alpine"
+          - dockerfile: 8.3/fpm/alpine
+            tag: "8.3-fpm-alpine"
+          - dockerfile: 8.3/cli/debian
+            tag: "8.3-cli-debian"
+          - dockerfile: 8.3/fpm/debian
+            tag: "8.3-fpm-debian"
+          - dockerfile: 8.4/cli/alpine
+            tag: "8.4-cli-alpine"
+          - dockerfile: 8.4/fpm/alpine
+            tag: "8.4-fpm-alpine"
+          - dockerfile: 8.4/cli/debian
+            tag: "8.4-cli-debian"
+          - dockerfile: 8.4/fpm/debian
+            tag: "8.4-fpm-debian"
+          - dockerfile: 8.5/cli/alpine
+            tag: "8.5-cli-alpine"
+          - dockerfile: 8.5/fpm/alpine
+            tag: "8.5-fpm-alpine"
+          - dockerfile: 8.5/cli/debian
+            tag: "8.5-cli-debian"
+          - dockerfile: 8.5/fpm/debian
+            tag: "8.5-fpm-debian"
+      fail-fast: false
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+      with:
+        driver-opts: image=moby/buildkit:latest,network=host
+
+    - name: Log in to GitHub Container Registry
+      run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+    - name: Cache Docker Layers
+      uses: actions/cache@v3
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.ref_name }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+
+    - name: Build and Push Multi-Arch Docker Image
+      env:
+        IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/php
+      run: |
+        DOCKERFILE_PATH="${{ matrix.dockerfile }}/Dockerfile"
+        IMAGE_TAG="${{ matrix.tag }}"
+        
+        echo "Building multi-arch Docker image for ${DOCKERFILE_PATH}..."
+        docker buildx build --platform linux/amd64,linux/arm64 \
+          --cache-from=type=local,src=/tmp/.buildx-cache \
+          --cache-to=type=local,dest=/tmp/.buildx-cache,mode=max \
+          -t "${IMAGE_NAME}:${IMAGE_TAG}" \
+          -f "${DOCKERFILE_PATH}" \
+          --push
+
+    - name: Scan Docker Image
+      uses: aquasecurity/trivy-action@v0.11.1
+      with:
+        image-ref: ghcr.io/${{ github.repository_owner }}/php:${{ matrix.tag }}
+
+    - name: Cleanup Cache
+      if: always()
+      run: rm -rf /tmp/.buildx-cache

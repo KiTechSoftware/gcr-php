@@ -22,10 +22,6 @@ jobs:
           - 8.4/fpm/alpine
           - 8.4/cli/debian
           - 8.4/fpm/debian
-          - 8.5/cli/alpine
-          - 8.5/fpm/alpine
-          - 8.5/cli/debian
-          - 8.5/fpm/debian
         os:
           - alpine
           - debian
@@ -47,13 +43,6 @@ jobs:
           - dockerfile: 8.4/fpm/debian
             tag: "8.4-fpm-debian"
           - dockerfile: 8.5/cli/alpine
-            tag: "8.5-cli-alpine"
-          - dockerfile: 8.5/fpm/alpine
-            tag: "8.5-fpm-alpine"
-          - dockerfile: 8.5/cli/debian
-            tag: "8.5-cli-debian"
-          - dockerfile: 8.5/fpm/debian
-            tag: "8.5-fpm-debian"
       fail-fast: false
 
     steps:

@@ -42,7 +42,6 @@ jobs:
             tag: "8.4-cli-debian"
           - dockerfile: 8.4/fpm/debian
             tag: "8.4-fpm-debian"
-          - dockerfile: 8.5/cli/alpine
       fail-fast: false
 
     steps:
@@ -78,6 +77,7 @@ jobs:
           --cache-to=type=local,dest=/tmp/.buildx-cache,mode=max \
           -t "${IMAGE_NAME}:${IMAGE_TAG}" \
           -f "${DOCKERFILE_PATH}" \
+          "${{ matrix.dockerfile }}" \
           --push
 
     - name: Scan Docker Image

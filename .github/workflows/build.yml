@@ -22,9 +22,6 @@ jobs:
           - 8.4/fpm/alpine
           - 8.4/cli/debian
           - 8.4/fpm/debian
-        os:
-          - alpine
-          - debian
         include:
           - dockerfile: 8.3/cli/alpine
             tag: "8.3-cli-alpine"
@@ -60,6 +57,14 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GHCR_PAT }}
 
+    - name: Cache Docker Layers
+      uses: actions/cache@v3
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.ref_name }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+
     - name: Extract Docker metadata
       id: meta
       uses: docker/metadata-action@v5
@@ -85,8 +90,8 @@ jobs:
         file: ./${{ matrix.dockerfile }}/Dockerfile
         platforms: linux/amd64,linux/arm64,linux/arm/v7
         push: true
-        cache-from: type=registry,ref=ghcr.io/kitechsoftware/${{ matrix.tag }}:cache
-        cache-to: type=registry,ref=ghcr.io/kitechsoftware/${{ matrix.tag }}:cache,mode=max
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
         tags: |
           ${{ vars.IMAGE }}:${{ matrix.tag }}
         labels: ${{ steps.meta.outputs.labels }}
@@ -94,8 +99,8 @@ jobs:
     - name: Scan Docker Image
       uses: aquasecurity/trivy-action@0.29.0
       with:
-        image-ref: ${{ steps.meta.outputs.tags }}
+        image-ref: ${{ vars.IMAGE }}:${{ matrix.tag }}
 
     - name: Cleanup Cache
-      if: always() && failure()
+      if: always()
       run: rm -rf /tmp/.buildx-cache

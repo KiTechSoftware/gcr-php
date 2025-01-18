@@ -67,13 +67,17 @@ jobs:
         images: |
           ${{ vars.IMAGE }}
         tags: |
-          type=ref,event=branch,pattern=main,latest=true
-          type=ref,event=tag
+          ${{ matrix.tag }}
         labels: |
           org.opencontainers.image.source=https://github.com/KiTechSoftware/gcr-php
-          org.opencontainers.image.created=${{ steps.meta.outputs.created }}
+          org.opencontainers.image.title=PHP Images
+          org.opencontainers.image.description=Multi-arch PHP images built for various configurations
+          org.opencontainers.image.source=https://github.com/KiTechSoftware/gcr-php
+          org.opencontainers.image.url=https://github.com/KiTechSoftware/gcr-php
           org.opencontainers.image.revision=${{ github.sha }}
+          org.opencontainers.image.created=${{ steps.meta.outputs.created }}
           org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+          org.opencontainers.image.licenses=MIT
 
     - name: Build and Push Docker Image
       uses: docker/build-push-action@v6

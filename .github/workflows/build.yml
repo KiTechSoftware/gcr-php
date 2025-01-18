@@ -67,7 +67,7 @@ jobs:
         images: |
           ${{ vars.IMAGE }}
         tags: |
-          type=ref,event=branch
+          type=ref,event=branch,pattern=main,latest=true
           type=ref,event=tag
         labels: |
           org.opencontainers.image.source=https://github.com/KiTechSoftware/gcr-php

@@ -69,7 +69,6 @@ jobs:
         tags: |
           ${{ matrix.tag }}
         labels: |
-          org.opencontainers.image.source=https://github.com/KiTechSoftware/gcr-php
           org.opencontainers.image.title=PHP Images
           org.opencontainers.image.description=Multi-arch PHP images built for various configurations
           org.opencontainers.image.source=https://github.com/KiTechSoftware/gcr-php
@@ -83,10 +82,13 @@ jobs:
       uses: docker/build-push-action@v6
       with:
         context: ./${{ matrix.dockerfile }}
-        file: ./${{ matrix.dockerfile }}/Dockerfile
-        platforms: linux/amd64,linux/arm64
+        file: Dockerfile
+        platforms: linux/amd64,linux/arm64,linux/arm/v7
         push: true
-        tags: ${{ steps.meta.outputs.tags }}
+        cache-from: type=registry,ref=ghcr.io/kitechsoftware/${{ matrix.tag }}:cache
+        cache-to: type=registry,ref=ghcr.io/kitechsoftware/${{ matrix.tag }}:cache,mode=max
+        tags: |
+          ${{ vars.IMAGE }}:${{ matrix.tag }}
         labels: ${{ steps.meta.outputs.labels }}
 
     - name: Scan Docker Image
@@ -95,5 +97,5 @@ jobs:
         image-ref: ${{ steps.meta.outputs.tags }}
 
     - name: Cleanup Cache
-      if: always()
+      if: always() && failure()
       run: rm -rf /tmp/.buildx-cache

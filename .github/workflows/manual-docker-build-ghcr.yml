@@ -15,13 +15,16 @@ jobs:
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
-
+    - name: Set lowercase repository name
+      id: repo
+      run: |
+          echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
     - name: Log in to GitHub Container Registry
       run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Build and Push Docker Image
       env:
-        IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/php
+        IMAGE_NAME: ghcr.io/${{ env.REPO_LC }}/php
         TAG: ${{ github.event.inputs.image_tag }}
       run: |
         echo "Building Docker image..."

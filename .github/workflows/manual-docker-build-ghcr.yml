@@ -25,7 +25,7 @@ jobs:
         TAG: ${{ github.event.inputs.image_tag }}
       run: |
         echo "Building Docker image..."
-        docker build -t "${IMAGE_NAME}:${TAG}" .
+        docker build -t "${IMAGE_NAME}:${TAG}" ./8.4/fpm/debian
         
         echo "Pushing Docker image..."
         docker push "${IMAGE_NAME}:${TAG}"

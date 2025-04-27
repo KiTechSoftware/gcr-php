@@ -1,0 +1,42 @@
+version: '3'
+
+vars:
+  IMAGE: ghcr.io/kitechsoftware/php
+  DOCKERFILE_DIR: '.'
+
+tasks:
+  build:
+    desc: Build the PHP Docker image for local testing
+    cmds:
+      - podman build --pull --rm -f {{.DOCKERFILE_DIR}}/{{.PHP_VERSION}}/Dockerfile -t {{.IMAGE}}:{{.PHP_VERSION}} {{.DOCKERFILE_DIR}}/{{.PHP_VERSION}}
+
+    vars:
+      PHP_VERSION:
+        sh: echo "${PHP_VERSION:-8.4}"
+
+  run:
+    desc: Run the built Docker image for local testing
+    cmds:
+      - podman run --rm -it -p 9000:9000 {{.IMAGE}}:{{.PHP_VERSION}}
+
+    vars:
+      PHP_VERSION:
+        sh: echo "${PHP_VERSION:-8.4}"
+
+  push:
+    desc: Push the built image to registry (manual testing)
+    cmds:
+      - podman push {{.IMAGE}}:{{.PHP_VERSION}}
+
+    vars:
+      PHP_VERSION:
+        sh: echo "${PHP_VERSION:-8.4}"
+
+  clean:
+    desc: Remove built images
+    cmds:
+      - podman rmi {{.IMAGE}}:{{.PHP_VERSION}} || true
+
+    vars:
+      PHP_VERSION:
+        sh: echo "${PHP_VERSION:-8.4}"

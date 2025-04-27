@@ -61,7 +61,8 @@ jobs:
         images: |
           ${{ vars.IMAGE }}
         tags: |
-          ${{ matrix.tag }}
+          type=raw,value=${{ matrix.tag }}
+          ${{ matrix.latest == 'true' && 'type=raw,value=latest' || '' }}
         labels: |
           org.opencontainers.image.title=PHP Images
           org.opencontainers.image.description=Multi-arch PHP images built for various configurations
@@ -69,21 +70,8 @@ jobs:
           org.opencontainers.image.url=https://github.com/KiTechSoftware/gcr-php
           org.opencontainers.image.revision=${{ github.sha }}
           org.opencontainers.image.created=${{ steps.meta.outputs.created }}
-          org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+          org.opencontainers.image.version=${{ matrix.tag }}
           org.opencontainers.image.licenses=MIT
-
-    - name: Set Image Tags
-      id: tags
-      run: |
-        TAGS="${IMAGE}:${TAG}"
-        if [ "$LATEST" = "true" ]; then
-          TAGS="${TAGS},${IMAGE}:latest"
-        fi
-        echo "tags=$TAGS" >> $GITHUB_OUTPUT
-      env:
-        IMAGE: ${{ vars.IMAGE }}
-        TAG: ${{ matrix.tag }}
-        LATEST: ${{ matrix.latest }}
 
     - name: Build and Push Docker Image
       uses: docker/build-push-action@v6
@@ -97,20 +85,13 @@ jobs:
           type=local,src=/tmp/.buildx-cache
         cache-to: |
           type=local,dest=/tmp/.buildx-cache,mode=max
-        tags: ${{ steps.tags.outputs.tags }}
+        tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
 
     - name: Scan Docker Image
       uses: aquasecurity/trivy-action@0.29.0
       with:
         image-ref: ${{ vars.IMAGE }}:${{ matrix.tag }}
-
-    - name: Debug Image Reference
-      run: |
-        echo "Constructed Image: ${{ vars.IMAGE }}:${{ matrix.tag }}"
-        if [[ "${{ matrix.latest }}" == "true" ]]; then
-          echo "Latest tag also applied: ${{ vars.IMAGE }}:latest"
-        fi
 
     - name: Cleanup Cache
       if: always()

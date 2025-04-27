@@ -75,10 +75,15 @@ jobs:
     - name: Set Image Tags
       id: tags
       run: |
-        echo "tags=${{ vars.IMAGE }}:${{ matrix.tag }}" >> $GITHUB_OUTPUT
-        if [ "${{ matrix.latest }}" = "true" ]; then
-          echo "tags=${{ vars.IMAGE }}:${{ matrix.tag }},${{ vars.IMAGE }}:latest" >> $GITHUB_OUTPUT
+        TAGS="${IMAGE}:${TAG}"
+        if [ "$LATEST" = "true" ]; then
+          TAGS="${TAGS},${IMAGE}:latest"
         fi
+        echo "tags=$TAGS" >> $GITHUB_OUTPUT
+      env:
+        IMAGE: ${{ vars.IMAGE }}
+        TAG: ${{ matrix.tag }}
+        LATEST: ${{ matrix.latest }}
 
     - name: Build and Push Docker Image
       uses: docker/build-push-action@v6

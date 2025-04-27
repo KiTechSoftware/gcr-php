@@ -36,6 +36,8 @@ jobs:
           push: true
           tags: |
             ${{ vars.IMAGE }}:8.3
+          cache-from: type=registry,ref=${{ vars.IMAGE }}:8.3
+          cache-to: type=inline
 
   build-php-8-4:
     name: Build PHP 8.4
@@ -65,3 +67,5 @@ jobs:
           tags: |
             ${{ vars.IMAGE }}:8.4
             ${{ vars.IMAGE }}:latest
+          cache-from: type=registry,ref=${{ vars.IMAGE }}:8.4
+          cache-to: type=inline

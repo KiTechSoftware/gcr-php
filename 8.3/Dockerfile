@@ -3,41 +3,25 @@ FROM php:8.3-fpm-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install system dependencies and PHP extensions
+# Pre-install essential build tools and system dependencies in one layer
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libzip-dev \
-    libicu-dev \
-    libonig-dev \
-    unzip \
-    pkg-config \
-    libxml2-dev \
-    zlib1g-dev \
-    g++ \
+    libpng-dev libjpeg-dev libfreetype6-dev \
+    libzip-dev libicu-dev libonig-dev libxml2-dev \
+    unzip pkg-config zlib1g-dev g++ curl ca-certificates \
  && docker-php-ext-configure gd --with-freetype --with-jpeg \
  && docker-php-ext-install \
-    pdo_mysql \
-    mysqli \
-    gd \
-    intl \
-    bcmath \
-    mbstring \
-    xml \
-    zip \
+    pdo_mysql mysqli gd intl bcmath mbstring xml zip \
+ && apt-get purge -y g++ pkg-config \
+ && apt-get autoremove -y \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
-# Install Composer globally
-RUN curl -sS https://getcomposer.org/installer | php -- \
-    --install-dir=/usr/local/bin --filename=composer
+# Install Composer globally (direct download without using PHP)
+RUN curl -sSLo /usr/local/bin/composer https://getcomposer.org/download/latest-stable/composer.phar \
+ && chmod +x /usr/local/bin/composer
 
-# Set working directory
 WORKDIR /var/www/html
 
-# Expose port for PHP-FPM
 EXPOSE 9000
 
-# Start PHP-FPM server
 CMD ["php-fpm"]

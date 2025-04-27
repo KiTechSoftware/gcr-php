@@ -20,11 +20,9 @@ jobs:
           - 8.4/
         include:
           - dockerfile: "8.3"
-            tag: "8.3"
-            latest: false
+            tags: "8.3"
           - dockerfile: "8.4"
-            tag: "8.4"
-            latest: true
+            tags: "8.4,latest"
       fail-fast: false
 
     steps:
@@ -48,7 +46,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: /tmp/.buildx-cache
-        key: buildx-${{ github.workflow }}-${{ github.ref_name }}-${{ matrix.tag }}
+        key: buildx-${{ github.workflow }}-${{ github.ref_name }}-${{ matrix.dockerfile }}
         restore-keys: |
           buildx-${{ github.workflow }}-${{ github.ref_name }}-
           buildx-${{ github.workflow }}-
@@ -61,8 +59,7 @@ jobs:
         images: |
           ${{ vars.IMAGE }}
         tags: |
-          type=raw,value=${{ matrix.tag }}
-          ${{ matrix.latest == 'true' && 'type=raw,value=latest' || '' }}
+          ${{ join(fromJson('["' + matrix.tags.replace(',', '","') + '"]'), '\n') }}
         labels: |
           org.opencontainers.image.title=PHP Images
           org.opencontainers.image.description=Multi-arch PHP images built for various configurations
@@ -70,7 +67,7 @@ jobs:
           org.opencontainers.image.url=https://github.com/KiTechSoftware/gcr-php
           org.opencontainers.image.revision=${{ github.sha }}
           org.opencontainers.image.created=${{ steps.meta.outputs.created }}
-          org.opencontainers.image.version=${{ matrix.tag }}
+          org.opencontainers.image.version=${{ matrix.tags }}
           org.opencontainers.image.licenses=MIT
 
     - name: Build and Push Docker Image
@@ -81,7 +78,7 @@ jobs:
         platforms: linux/amd64,linux/arm64
         push: true
         cache-from: |
-          type=registry,ref=${{ vars.IMAGE }}:${{ matrix.tag }}
+          type=registry,ref=${{ vars.IMAGE }}:${{ matrix.tags }}
           type=local,src=/tmp/.buildx-cache
         cache-to: |
           type=local,dest=/tmp/.buildx-cache,mode=max
@@ -91,7 +88,7 @@ jobs:
     - name: Scan Docker Image
       uses: aquasecurity/trivy-action@0.29.0
       with:
-        image-ref: ${{ vars.IMAGE }}:${{ matrix.tag }}
+        image-ref: ${{ vars.IMAGE }}:${{ matrix.tags }}
 
     - name: Cleanup Cache
       if: always()

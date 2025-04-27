@@ -3,12 +3,11 @@ FROM php:8.3-fpm-bookworm AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpng-dev libjpeg-dev libfreetype6-dev \
+    libpng-dev libjpeg-dev libfreetype-dev \
     libzip-dev libicu-dev libonig-dev libxml2-dev \
     libmagickwand-dev imagemagick \
-    unzip pkg-config zlib1g-dev g++ make autoconf curl ca-certificates
-
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    unzip pkg-config zlib1g-dev g++ make autoconf curl ca-certificates \
+ && docker-php-ext-configure gd --with-freetype --with-jpeg \
  && docker-php-ext-install \
     pdo_mysql mysqli gd intl bcmath mbstring xml json zip \
     pdo_pgsql pdo_sqlite sockets pcntl xsl opcache

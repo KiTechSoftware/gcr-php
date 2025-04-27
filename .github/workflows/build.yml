@@ -72,6 +72,14 @@ jobs:
           org.opencontainers.image.version=${{ steps.meta.outputs.version }}
           org.opencontainers.image.licenses=MIT
 
+    - name: Set Image Tags
+      id: tags
+      run: |
+        echo "tags=${{ vars.IMAGE }}:${{ matrix.tag }}" >> $GITHUB_OUTPUT
+        if [ "${{ matrix.latest }}" = "true" ]; then
+          echo "tags=${{ vars.IMAGE }}:${{ matrix.tag }},${{ vars.IMAGE }}:latest" >> $GITHUB_OUTPUT
+        fi
+
     - name: Build and Push Docker Image
       uses: docker/build-push-action@v6
       with:
@@ -80,12 +88,11 @@ jobs:
         platforms: linux/amd64,linux/arm64
         push: true
         cache-from: |
+          type=registry,ref=${{ vars.IMAGE }}:${{ matrix.tag }}
           type=local,src=/tmp/.buildx-cache
         cache-to: |
           type=local,dest=/tmp/.buildx-cache,mode=max
-        tags: |
-          ${{ vars.IMAGE }}:${{ matrix.tag }}
-          ${{ matrix.latest == 'true' && vars.IMAGE + ':latest' || '' }}
+        tags: ${{ steps.tags.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
 
     - name: Scan Docker Image
@@ -97,7 +104,7 @@ jobs:
       run: |
         echo "Constructed Image: ${{ vars.IMAGE }}:${{ matrix.tag }}"
         if [[ "${{ matrix.latest }}" == "true" ]]; then
-          echo "Latest tag applied: ${{ vars.IMAGE }}:latest"
+          echo "Latest tag also applied: ${{ vars.IMAGE }}:latest"
         fi
 
     - name: Cleanup Cache

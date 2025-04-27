@@ -7,10 +7,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpng-dev libjpeg-dev libfreetype6-dev \
     libzip-dev libicu-dev libonig-dev libxml2-dev \
-    unzip pkg-config zlib1g-dev g++ curl ca-certificates \
+    libldap2-dev unzip pkg-config zlib1g-dev g++ curl ca-certificates \
  && docker-php-ext-configure gd --with-freetype --with-jpeg \
  && docker-php-ext-install \
-    pdo_mysql mysqli gd intl bcmath mbstring xml zip \
+    pdo_mysql mysqli gd intl bcmath mbstring xml json zip \
+    pdo_pgsql pdo_sqlite xml sockets pcntl xsl opcache ldap \
+ && pecl install redis imagick \
+ && docker-php-ext-enable redis imagick \
  && apt-get purge -y g++ pkg-config \
  && apt-get autoremove -y \
  && apt-get clean \

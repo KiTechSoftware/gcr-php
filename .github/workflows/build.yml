@@ -6,8 +6,6 @@ on:
       - main
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
-  schedule:
-    - cron: '0 3 * * *'
 
   workflow_dispatch: {}
 
@@ -87,13 +85,20 @@ jobs:
           type=local,dest=/tmp/.buildx-cache,mode=max
         tags: |
           ${{ vars.IMAGE }}:${{ matrix.tag }}
-          ${{ matrix.latest == 'true' && format('{0}:latest', vars.IMAGE) || '' }}
+          ${{ matrix.latest == 'true' && vars.IMAGE + ':latest' || '' }}
         labels: ${{ steps.meta.outputs.labels }}
 
     - name: Scan Docker Image
       uses: aquasecurity/trivy-action@0.29.0
       with:
         image-ref: ${{ vars.IMAGE }}:${{ matrix.tag }}
+
+    - name: Debug Image Reference
+      run: |
+        echo "Constructed Image: ${{ vars.IMAGE }}:${{ matrix.tag }}"
+        if [[ "${{ matrix.latest }}" == "true" ]]; then
+          echo "Latest tag applied: ${{ vars.IMAGE }}:latest"
+        fi
 
     - name: Cleanup Cache
       if: always()

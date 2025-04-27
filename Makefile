@@ -1,5 +1,5 @@
-IMAGE=ghcr.io/kitechsoftware/gcr-php
-PHP_VERSION?=8.4
+IMAGE=ghcr.io/kitechsoftware/php
+PHP_VERSION?=8.3
 DOCKERFILE_DIR=.
 
 build:

@@ -1,15 +1,7 @@
 name: Build and Push Multi-Arch Docker Images
 
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - '[0-9]+.[0-9]+.[0-9]+'
   workflow_dispatch: {}
-
-env:
-  IMAGE: ghcr.io/kitechsoftware/cache-php
 
 jobs:
   build-php-8-3:
@@ -35,14 +27,12 @@ jobs:
       - name: Build and Push PHP 8.3
         uses: docker/build-push-action@v6
         with:
-          context: ./8.3
-          file: ./8.3/Dockerfile
+          context: ./final/8.3
+          file: ./final/8.3/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
             ${{ vars.IMAGE }}:8.3
-          cache-from: type=registry,ref=${{ env.IMAGE }}-8.3
-          cache-to: type=registry,ref=${{ env.IMAGE }}-8.3,mode=max
 
   build-php-8-4:
     name: Build PHP 8.4
@@ -67,12 +57,10 @@ jobs:
       - name: Build and Push PHP 8.4 and latest
         uses: docker/build-push-action@v6
         with:
-          context: ./8.4
-          file: ./8.4/Dockerfile
+          context: ./final/8.4
+          file: ./final/8.4/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
             ${{ vars.IMAGE }}:8.4
             ${{ vars.IMAGE }}:latest
-          cache-from: type=registry,ref=${{ env.IMAGE }}-8.4
-          cache-to: type=registry,ref=${{ env.IMAGE }}-8.4,mode=max

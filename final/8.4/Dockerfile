@@ -5,9 +5,10 @@ FROM php:8.4-fpm-bookworm
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-   libfreetype6 libjpeg62-turbo libpng16-16 \
-   libzip4 libicu72 libonig5 libxml2 \
-   libmagickwand-6.q16-6 imagemagick \
+  libfreetype6 libjpeg62-turbo libpng16-16 \
+  libzip4 libicu72 libonig5 libxml2 \
+  libmagickwand-6.q16-6 imagemagick \
+  libpq5 libxslt1.1 \
  && rm -rf /var/lib/apt/lists/*
 
 # Copy compiled PHP extensions and config

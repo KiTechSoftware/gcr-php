@@ -1,9 +1,7 @@
 # Core variables
 IMAGE=ghcr.io/kitechsoftware/php
 BUILDER_IMAGE=$(IMAGE)-builder
-FINAL_IMAGE=$(IMAGE)
 DOCKERFILE_DIR=.
-PLATFORMS=linux/amd64,linux/arm64
 
 # Architectures separately (for manifests)
 ARCHS=amd64 arm64
@@ -35,7 +33,7 @@ build-final: build-builder
 		podman build --pull --rm \
 			--arch=$$arch \
 			--file $(DOCKERFILE_DIR)/final/$(PHP_VERSION)/Dockerfile \
-			--tag $(FINAL_IMAGE):$(PHP_VERSION)-$$arch \
+			--tag $(IMAGE):$(PHP_VERSION)-$$arch \
 			--format docker \
 			$(DOCKERFILE_DIR)/final/$(PHP_VERSION); \
 	done
@@ -56,40 +54,41 @@ manifest-push-builder:
 # Create and push multi-arch manifest
 manifest-push:
 	@echo "📦 Creating manifest for $(PHP_VERSION)..."
-	podman push $(FINAL_IMAGE):$(PHP_VERSION)-amd64
-	podman push $(FINAL_IMAGE):$(PHP_VERSION)-arm64
+	podman push $(IMAGE):$(PHP_VERSION)-amd64
+	podman push $(IMAGE):$(PHP_VERSION)-arm64
 
-	podman manifest rm $(FINAL_IMAGE):$(PHP_VERSION) || true
-	podman manifest create $(FINAL_IMAGE):$(PHP_VERSION)
+	podman manifest rm $(IMAGE):$(PHP_VERSION) || true
+	podman manifest create $(IMAGE):$(PHP_VERSION)
 
 	@for arch in $(ARCHS); do \
-		podman manifest add $(FINAL_IMAGE):$(PHP_VERSION) docker://$(FINAL_IMAGE):$(PHP_VERSION)-$$arch; \
+		podman manifest add $(IMAGE):$(PHP_VERSION) docker://$(IMAGE):$(PHP_VERSION)-$$arch; \
 	done
-	podman manifest push $(FINAL_IMAGE):$(PHP_VERSION) docker://$(FINAL_IMAGE):$(PHP_VERSION)
+	podman manifest push $(IMAGE):$(PHP_VERSION) docker://$(IMAGE):$(PHP_VERSION)
 
 	@if [ "$(PHP_VERSION)" = "$(LATEST_VERSION)" ]; then \
 		echo "📦 Creating and pushing manifest for latest..."; \
-		podman manifest create $(FINAL_IMAGE):latest; \
+		podman manifest create $(IMAGE):latest; \
 		for arch in $(ARCHS); do \
-			podman manifest add $(FINAL_IMAGE):latest docker://$(FINAL_IMAGE):$(PHP_VERSION)-$$arch; \
+			podman manifest add $(IMAGE):latest docker://$(IMAGE):$(PHP_VERSION)-$$arch; \
 		done; \
-		podman manifest push $(FINAL_IMAGE):latest docker://$(FINAL_IMAGE):latest; \
+		podman manifest push $(IMAGE):latest docker://$(IMAGE):latest; \
 	fi
 
 # Build and push
-build-push: build-final manifest-push
+build-push: clean build-final manifest-push
 
 # Build and push
-build-push-builder: build-builder manifest-push-builder
+build-push-builder: clean build-builder manifest-push-builder
 
 # Clean images
 clean:
 	@echo "🧹 Cleaning images for PHP $(PHP_VERSION)..."
 	for arch in $(ARCHS); do \
-		podman rmi $(FINAL_IMAGE):$(PHP_VERSION)-$$arch || true; \
+		podman rmi $(IMAGE):$(PHP_VERSION)-$$arch || true; \
 		podman rmi $(BUILDER_IMAGE):$(PHP_VERSION)-$$arch || true; \
 	done
-	podman rmi $(FINAL_IMAGE):$(PHP_VERSION) || true
+	podman rmi $(IMAGE):$(PHP_VERSION) || true
+	podman rmi $(BUILDER_IMAGE):$(PHP_VERSION) || true
 	@if [ "$(PHP_VERSION)" = "$(LATEST_VERSION)" ]; then \
-		podman rmi $(FINAL_IMAGE):latest || true; \
+		podman rmi $(IMAGE):latest || true; \
 	fi
